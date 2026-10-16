@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#203541">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="易経計算">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <title>易経・擲銭法 計算アプリ</title>
+  <style>
+    :root {
+      font-family: "Yu Gothic UI", "Meiryo UI", Meiryo, sans-serif;
+      color: #1f2d36;
+      background: #f3f5f2;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --ink: #203541;
+      --muted: #5e6d70;
+      --accent: #2d655f;
+      --accent-soft: #e7f0eb;
+      --line: #d8dfdb;
+      --paper: #fffefa;
+      --moving: #a34d32;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    .page { width: min(960px, calc(100% - 32px)); margin: 36px auto 56px; }
+    header { margin-bottom: 24px; }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: .82rem; font-weight: 700; letter-spacing: .12em; }
+    h1 { margin: 0; color: var(--ink); font-size: clamp(1.65rem, 4vw, 2.25rem); letter-spacing: .02em; }
+    .lead { max-width: 700px; margin: 10px 0 0; color: var(--muted); line-height: 1.8; }
+    .panel { padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: 0 8px 24px #2035410a; }
+    .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    h2 { margin: 0; color: var(--ink); font-size: 1.2rem; }
+    .help { margin: 5px 0 0; color: var(--muted); font-size: .92rem; line-height: 1.65; }
+    .inputs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .input-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 68px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .input-label { display: flex; flex-direction: column; gap: 3px; color: var(--ink); font-weight: 700; }
+    .input-label small { color: var(--muted); font-size: .76rem; font-weight: 400; }
+    select { width: 82px; min-height: 42px; padding: 7px 10px; border: 1px solid #aebbb5; border-radius: 9px; background: #fff; color: var(--ink); font: inherit; font-size: 1.08rem; font-weight: 700; }
+    select:focus-visible, button:focus-visible { outline: 3px solid #72a99b; outline-offset: 2px; }
+    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    button { min-height: 42px; padding: 9px 16px; border: 1px solid #aebbb5; border-radius: 9px; background: #fff; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+    button:hover { background: #f2f6f3; }
+    .auto-note { color: var(--muted); font-size: .86rem; }
+    .rule-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .rule { padding: 6px 10px; border-radius: 999px; background: var(--accent-soft); color: #28534d; font-size: .82rem; }
+    #status { margin: 20px 0 0; padding: 15px 17px; border-left: 4px solid #92a59d; border-radius: 8px; background: #eef2ef; color: #465a57; line-height: 1.65; }
+    #results { margin-top: 24px; }
+    #results[hidden] { display: none; }
+    #results.no-changing .result-grid { grid-template-columns: 1fr; }
+    .moving-summary { margin: 0 0 14px; padding: 13px 16px; border: 1px solid #e4c7bb; border-radius: 11px; background: #fbf0eb; color: #743d2b; line-height: 1.6; }
+    #changed-card[hidden] { display: none; }
+    .result-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .hex-card { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+    .hex-card h2 { color: var(--accent); font-size: .93rem; letter-spacing: .06em; }
+    .hex-name { margin: 7px 0 15px; color: var(--ink); font-size: 1.4rem; font-weight: 800; line-height: 1.4; }
+    .hex-name .number { margin-right: 7px; font-size: 1.9rem; font-variant-numeric: tabular-nums; }
+    .trigrams { display: grid; gap: 7px; margin: 0 0 16px; }
+    .trigram { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 9px; color: var(--muted); font-size: .9rem; }
+    .trigram strong { min-width: 3.7em; color: var(--ink); }
+    .trigram .trigram-symbol { color: var(--accent); font-weight: 700; }
+    .diagram-title { margin: 0 0 7px; color: var(--muted); font-size: .82rem; }
+    .line-diagram { display: grid; gap: 5px; width: min(100%, 250px); padding: 12px; border: 1px solid #e1e6e2; border-radius: 10px; background: #fbfcfa; }
+    .line-row { display: grid; grid-template-columns: 47px minmax(72px, 1fr) 36px; align-items: center; gap: 8px; min-height: 18px; }
+    .line-position { color: var(--muted); font-size: .76rem; text-align: right; white-space: nowrap; }
+    .stroke { display: flex; justify-self: center; width: min(100%, 132px); gap: 12px; height: 10px; }
+    .stroke span { display: block; flex: 1 1 0; min-width: 0; height: 9px; border-radius: 2px; background: #263b40; }
+    .line-mark { color: var(--moving); font-size: .72rem; font-weight: 800; }
+    .footer-note { margin: 15px 2px 0; color: var(--muted); font-size: .82rem; line-height: 1.7; }
+    @media (max-width: 700px) {
+      .page { margin-top: 24px; }
+      .inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .result-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 420px) {
+      .page { width: min(100% - 20px, 960px); }
+      .panel { padding: 16px; }
+      .inputs { gap: 8px; }
+      .input-card { align-items: flex-start; flex-direction: column; gap: 8px; padding: 10px; }
+      select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <p class="eyebrow">オフラインで使える個人用ツール</p>
+      <h1>易経・擲銭法 計算アプリ</h1>
+      <p class="lead">コイン3枚を投げて得た数字を、最下段の1爻から順に入力してください。本卦・動爻・之卦を自動で表示します。</p>
+    </header>
+
+    <section class="panel" aria-labelledby="input-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="input-title">コインの結果を入力</h2>
+          <p class="help">各爻の合計値（6・7・8・9）を選びます。1爻が最下段、6爻が最上段です。</p>
+        </div>
+      </div>
+      <div class="inputs" id="inputs">
+        <label class="input-card"><span class="input-label">1爻<small>最下段</small></span><select data-line="0" aria-label="1爻 最下段"><option value="">選択</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+        <label class="input-card"><span class="input-label">2爻</span><select data-line="1" aria-label="2爻"><option value="">選択</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+        <label class="input-card"><span class="input-label">3爻</span><select data-line="2" aria-label="3爻"><option value="">選択</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+        <label class="input-card"><span class="input-label">4爻</span><select data-line="3" aria-label="4爻"><option value="">選択</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+        <label class="input-card"><span class="input-label">5爻</span><select data-line="4" aria-label="5爻"><option value="">選択</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+        <label class="input-card"><span class="input-label">6爻<small>最上段</small></span><select data-line="5" aria-label="6爻 最上段"><option value="">選択</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+      </div>
+      <div class="actions">
+        <button id="reset" type="button">入力をクリア</button>
+        <span class="auto-note">6つすべて選ぶと、結果が自動で更新されます。</span>
+      </div>
+      <div class="rule-strip" aria-label="計算規則">
+        <span class="rule">6・8：陰爻</span><span class="rule">7・9：陽爻</span>
+        <span class="rule">6：陰から陽へ</span><span class="rule">9：陽から陰へ</span>
+      </div>
+    </section>
+
+    <p id="status" role="status" aria-live="polite">結果を表示するには、1爻から6爻までの数字を選んでください。</p>
+
+    <section id="results" aria-label="計算結果" hidden>
+      <p class="moving-summary" id="moving-summary"></p>
+      <div class="result-grid">
+        <article class="hex-card" aria-labelledby="original-title">
+          <h2 id="original-title">本卦</h2>
+          <p class="hex-name" id="original-name"></p>
+          <div class="trigrams" id="original-trigrams"></div>
+          <p class="diagram-title">爻の図（6爻が上、1爻が下）</p>
+          <div class="line-diagram" id="original-diagram" aria-label="本卦の爻の図"></div>
+        </article>
+        <article class="hex-card" id="changed-card" aria-labelledby="changed-title">
+          <h2 id="changed-title">之卦（変化後）</h2>
+          <p class="hex-name" id="changed-name"></p>
+          <div class="trigrams" id="changed-trigrams"></div>
+          <p class="diagram-title">爻の図（6爻が上、1爻が下）</p>
+          <div class="line-diagram" id="changed-diagram" aria-label="之卦の爻の図"></div>
+        </article>
+      </div>
+      <p class="footer-note">卦番号と卦名は、画面に入力した爻を下から上へ並べ、指定された六十四卦対応表（行＝下卦、列＝上卦）で求めています。</p>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    const TRIGRAM_ORDER = ["乾", "震", "坎", "艮", "坤", "巽", "離", "兌"];
+    const TRIGRAMS = {
+      "111": { name: "乾", symbol: "天" },
+      "110": { name: "兌", symbol: "沢" },
+      "101": { name: "離", symbol: "火" },
+      "100": { name: "震", symbol: "雷" },
+      "011": { name: "巽", symbol: "風・木" },
+      "010": { name: "坎", symbol: "水" },
+      "001": { name: "艮", symbol: "山" },
+      "000": { name: "坤", symbol: "地" }
+    };
+    // 行は下卦、列は上卦。行・列の順は TRIGRAM_ORDER と同じ。
+    const HEXAGRAM_NUMBERS = [
+      [1, 34, 5, 26, 11, 9, 14, 43],
+      [25, 51, 3, 27, 24, 42, 21, 17],
+      [6, 40, 29, 4, 7, 59, 64, 47],
+      [33, 62, 39, 52, 15, 53, 56, 31],
+      [12, 16, 8, 23, 2, 20, 35, 45],
+      [44, 32, 48, 18, 46, 57, 50, 28],
+      [13, 55, 63, 22, 36, 37, 30, 49],
+      [10, 54, 60, 41, 19, 61, 38, 58]
+    ];
+    // 名称は添付資料「六十四卦対応表 03」の表記を参照。
+    const HEXAGRAM_NAMES = {
+      1: "乾為天", 2: "坤為地", 3: "水雷屯", 4: "山水蒙", 5: "水天需", 6: "天水訟", 7: "地水師", 8: "水地比",
+      9: "風天小畜", 10: "天沢履", 11: "地天泰", 12: "天地否", 13: "天火同人", 14: "火天大有", 15: "地山謙", 16: "雷地豫",
+      17: "沢雷随", 18: "山風蠱", 19: "地沢臨", 20: "風地観", 21: "火雷噬嗑", 22: "山火賁", 23: "山地剝", 24: "地雷復",
+      25: "天雷无妄", 26: "山天大畜", 27: "山雷頤", 28: "沢風大過", 29: "坎為水", 30: "離為火", 31: "沢山咸", 32: "雷風恒",
+      33: "天山遯", 34: "雷天大壮", 35: "火地晋", 36: "地火明夷", 37: "風火家人", 38: "火沢睽", 39: "水山蹇", 40: "雷水解",
+      41: "山沢損", 42: "風雷益", 43: "沢天夬", 44: "天風姤", 45: "沢地萃", 46: "地風升", 47: "沢水困", 48: "水風井",
+      49: "沢火革", 50: "火風鼎", 51: "震為雷", 52: "艮為山", 53: "風山漸", 54: "雷沢帰妹", 55: "雷火豊", 56: "火山旅",
+      57: "巽為風", 58: "兌為沢", 59: "風水渙", 60: "水沢節", 61: "風沢中孚", 62: "雷山小過", 63: "水火既済", 64: "火水未済"
+    };
+
+    function getTrigram(lines) {
+      const key = lines.map(value => value % 2 === 0 ? "0" : "1").join("");
+      return TRIGRAMS[key];
+    }
+
+    function getHexagram(lines) {
+      const lower = getTrigram(lines.slice(0, 3));
+      const upper = getTrigram(lines.slice(3, 6));
+      const number = HEXAGRAM_NUMBERS[TRIGRAM_ORDER.indexOf(lower.name)][TRIGRAM_ORDER.indexOf(upper.name)];
+      return { number, name: HEXAGRAM_NAMES[number] || "", upper, lower };
+    }
+
+    function calculateHexagram(values) {
+      if (!Array.isArray(values) || values.length !== 6 || values.some(value => ![6, 7, 8, 9].includes(Number(value)))) {
+        throw new Error("6・7・8・9から6つの値を指定してください。");
+      }
+      const originalLines = values.map(Number);
+      const changedLines = originalLines.map(value => value === 6 ? 7 : value === 9 ? 8 : value);
+      const movingPositions = originalLines.flatMap((value, index) => value === 6 || value === 9 ? [index + 1] : []);
+      return {
+        original: getHexagram(originalLines),
+        changed: movingPositions.length ? getHexagram(changedLines) : null,
+        originalLines,
+        changedLines,
+        movingPositions
+      };
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const selects = Array.from(document.querySelectorAll("select[data-line]"));
+      const status = document.getElementById("status");
+      const results = document.getElementById("results");
+
+      function renderHexagramName(elementId, hexagram) {
+        const element = document.getElementById(elementId);
+        element.replaceChildren();
+        const number = document.createElement("span");
+        number.className = "number";
+        number.textContent = hexagram.number;
+        element.append(number, document.createTextNode(hexagram.name || `上卦${hexagram.upper.name}・下卦${hexagram.lower.name}`));
+      }
+
+      function renderTrigrams(elementId, hexagram) {
+        const element = document.getElementById(elementId);
+        element.replaceChildren();
+        [["上卦", hexagram.upper], ["下卦", hexagram.lower]].forEach(([position, trigram]) => {
+          const row = document.createElement("div");
+          row.className = "trigram";
+          const label = document.createElement("strong");
+          label.textContent = position;
+          const name = document.createElement("span");
+          name.textContent = trigram.name;
+          const symbol = document.createElement("span");
+          symbol.className = "trigram-symbol";
+          symbol.textContent = `（${trigram.symbol}）`;
+          row.append(label, name, symbol);
+          element.append(row);
+        });
+      }
+
+      function renderDiagram(elementId, lines, movingPositions, showValues) {
+        const diagram = document.getElementById(elementId);
+        diagram.replaceChildren();
+        for (let index = 5; index >= 0; index -= 1) {
+          const value = lines[index];
+          const row = document.createElement("div");
+          row.className = "line-row";
+          const label = document.createElement("span");
+          label.className = "line-position";
+          label.textContent = `${index + 1}爻${showValues ? `（${value}）` : ""}`;
+          const stroke = document.createElement("span");
+          stroke.className = `stroke ${value % 2 === 0 ? "yin" : "yang"}`;
+          stroke.setAttribute("aria-label", value % 2 === 0 ? "陰爻" : "陽爻");
+          stroke.append(document.createElement("span"));
+          if (value % 2 === 0) stroke.append(document.createElement("span"));
+          const mark = document.createElement("span");
+          mark.className = "line-mark";
+          mark.textContent = movingPositions.includes(index + 1) ? "動爻" : "";
+          row.append(label, stroke, mark);
+          diagram.append(row);
+        }
+      }
+
+      function update() {
+        const values = selects.map(select => select.value);
+        if (values.some(value => value === "")) {
+          results.hidden = true;
+          status.textContent = `あと${values.filter(value => value === "").length}か所選ぶと、計算結果を表示します。`;
+          return;
+        }
+        const result = calculateHexagram(values);
+        const hasChangedHexagram = result.changed !== null;
+        const movingText = hasChangedHexagram
+          ? `動爻：${result.movingPositions.map(position => `${position}爻`).join("・")}。6は陰から陽へ、9は陽から陰へ変化します。`
+          : "動爻なし。之卦なし。";
+        document.getElementById("moving-summary").textContent = movingText;
+        renderHexagramName("original-name", result.original);
+        renderTrigrams("original-trigrams", result.original);
+        renderDiagram("original-diagram", result.originalLines, result.movingPositions, true);
+        results.classList.toggle("no-changing", !hasChangedHexagram);
+        document.getElementById("changed-card").hidden = !hasChangedHexagram;
+        if (hasChangedHexagram) {
+          renderHexagramName("changed-name", result.changed);
+          renderTrigrams("changed-trigrams", result.changed);
+          renderDiagram("changed-diagram", result.changedLines, [], false);
+        }
+        results.hidden = false;
+        status.textContent = "計算しました。入力を変更すると結果も自動で更新されます。";
+      }
+
+      selects.forEach(select => select.addEventListener("change", update));
+      document.getElementById("reset").addEventListener("click", () => {
+        selects.forEach(select => { select.value = ""; });
+        update();
+        selects[0].focus();
+      });
+      update();
+    });
+
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
