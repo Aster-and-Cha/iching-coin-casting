@@ -1,13 +1,13 @@
 "use strict";
 
-const CACHE_NAME = "iching-coin-casting-v1";
+const CACHE_NAME = "iching-coin-casting-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./apple-touch-icon.png",
-  "./icon-192.png",
-  "./icon-512.png"
+  "./apple-touch-icon-180.png",
+  "./iching-icon-192.png",
+  "./iching-icon-512.png"
 ];
 
 self.addEventListener("install", event => {
